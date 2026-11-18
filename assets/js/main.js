@@ -135,4 +135,64 @@
   /* ---------- 6. 页脚年份 ---------- */
   var yearEl = document.getElementById('year');
   if (yearEl) { yearEl.textContent = new Date().getFullYear(); }
+
+  /* ---------- 7. 中英文切换 ---------- */
+  var LANG_KEY = 'llw-lang';
+  var langToggle = document.getElementById('langToggle');
+  var i18nNodes = Array.prototype.slice.call(document.querySelectorAll('[data-en-html]'));
+
+  // 首次加载时把中文版内容存进 data-zh-html，便于来回切换
+  i18nNodes.forEach(function (el) {
+    el.setAttribute('data-zh-html', el.innerHTML);
+  });
+
+  var pageMeta = {
+    zh: {
+      title: '王龙龙 | 哈尔滨工业大学（深圳）材料科学与工程学院',
+      desc: '王龙龙，哈尔滨工业大学（深圳）材料科学与工程学院教授、博士生导师，国家级青年人才。从事高比能二次电池的材料设计与界面调控研究，聚焦全固态电池、高比能正极材料与先进表征。',
+      toggle: 'EN',
+      label: 'Switch to English'
+    },
+    en: {
+      title: 'Longlong Wang | School of Materials Science and Engineering, HIT Shenzhen',
+      desc: 'Longlong Wang is a Professor and Ph.D. supervisor at the School of Materials Science and Engineering, Harbin Institute of Technology, Shenzhen. His research focuses on materials design and interface engineering for high-energy rechargeable batteries.',
+      toggle: '中文',
+      label: '切换到中文'
+    }
+  };
+
+  var applyLang = function (lang) {
+    var isEn = lang === 'en';
+
+    i18nNodes.forEach(function (el) {
+      el.innerHTML = isEn ? el.getAttribute('data-en-html') : el.getAttribute('data-zh-html');
+    });
+
+    var meta = pageMeta[isEn ? 'en' : 'zh'];
+    document.title = meta.title;
+    var descEl = document.querySelector('meta[name="description"]');
+    if (descEl) { descEl.setAttribute('content', meta.desc); }
+
+    if (langToggle) {
+      langToggle.textContent = meta.toggle;
+      langToggle.setAttribute('aria-label', meta.label);
+      langToggle.setAttribute('title', meta.label);
+    }
+
+    document.documentElement.lang = isEn ? 'en' : 'zh-CN';
+    document.documentElement.setAttribute('data-lang', isEn ? 'en' : 'zh');
+
+    try { window.localStorage.setItem(LANG_KEY, lang); } catch (err) {}
+  };
+
+  var initialLang = 'zh';
+  try { initialLang = window.localStorage.getItem(LANG_KEY) || 'zh'; } catch (err) {}
+  applyLang(initialLang);
+
+  if (langToggle) {
+    langToggle.addEventListener('click', function () {
+      var current = document.documentElement.getAttribute('data-lang');
+      applyLang(current === 'en' ? 'zh' : 'en');
+    });
+  }
 })();
