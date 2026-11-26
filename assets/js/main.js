@@ -1,5 +1,5 @@
 /* =========================================================
-   Wang Group — 交互脚本
+   EESMIL — 电化学储能材料与界面实验室交互脚本
    1. 顶部导航状态 / 移动端菜单
    2. 滚动定位高亮
    3. 进场动画
@@ -16,6 +16,7 @@
   var toTop = document.getElementById('toTop');
   var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
   var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isEnglish = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
 
   /* ---------------- 1. 顶部导航 ---------------- */
   function onScroll() {
@@ -30,14 +31,16 @@
     if (!nav || !navToggle) return;
     nav.classList.remove('is-open');
     navToggle.setAttribute('aria-expanded', 'false');
-    navToggle.setAttribute('aria-label', '打开菜单');
+    navToggle.setAttribute('aria-label', isEnglish ? 'Open menu' : '打开菜单');
   }
 
   if (navToggle && nav) {
     navToggle.addEventListener('click', function () {
       var open = nav.classList.toggle('is-open');
       navToggle.setAttribute('aria-expanded', String(open));
-      navToggle.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+      navToggle.setAttribute('aria-label', open
+        ? (isEnglish ? 'Close menu' : '关闭菜单')
+        : (isEnglish ? 'Open menu' : '打开菜单'));
     });
 
     // 点击导航项或页面其他区域时收起菜单
@@ -142,7 +145,10 @@
     var countEl = countElId ? document.getElementById(countElId) : null;
 
     function updateCount(visible) {
-      if (countEl) countEl.textContent = '共 ' + visible + ' 条' + (unit || '');
+      if (!countEl) return;
+      countEl.textContent = isEnglish
+        ? visible + (visible === 1 ? ' paper' : ' papers')
+        : '共 ' + visible + ' 条' + (unit || '');
     }
 
     group.addEventListener('click', function (e) {
@@ -169,16 +175,30 @@
 
   initFilter('[data-filter-group="papers"]', '.paper-item', 'paperCount', '');
 
-  // 年份筛选时同步隐藏亮点论文卡，避免计数与实际内容不一致
+  // 年份筛选时同步隐藏亮点论文卡，并让计数包含特稿
   var featuredPaper = document.querySelector('.featured-paper');
   var paperFilterBar = document.querySelector('[data-filter-group="papers"]');
   if (featuredPaper && paperFilterBar) {
+    var paperHint = document.getElementById('paperCount');
+
+    function syncPaperCount(filter) {
+      if (!paperHint) return;
+      var visible = document.querySelectorAll('.paper-item:not(.is-hidden)').length;
+      if (filter === 'all' || filter === featuredPaper.getAttribute('data-year')) visible += 1;
+      paperHint.textContent = isEnglish
+        ? visible + (visible === 1 ? ' paper' : ' papers')
+        : '共 ' + visible + ' 条';
+    }
+
+    syncPaperCount('all');
+
     paperFilterBar.addEventListener('click', function (e) {
       var btn = e.target.closest('.chip');
       if (!btn) return;
       var filter = btn.getAttribute('data-filter');
       var featuredYear = featuredPaper.getAttribute('data-year');
       featuredPaper.classList.toggle('is-hidden', filter !== 'all' && filter !== featuredYear);
+      syncPaperCount(filter);
     });
   }
 
@@ -195,7 +215,9 @@
       var visible = teamItems.filter(function (item) {
         return !item.classList.contains('is-hidden');
       }).length;
-      teamHint.textContent = '共 ' + visible + ' 位';
+      teamHint.textContent = isEnglish
+        ? visible + (visible === 1 ? ' member' : ' members')
+        : '共 ' + visible + ' 位';
     }
     if (teamBar) {
       teamBar.addEventListener('click', function (e) {
